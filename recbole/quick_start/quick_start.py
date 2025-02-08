@@ -39,6 +39,7 @@ from recbole.utils import (
 def run(
     model,
     dataset,
+    exp_name, 
     config_file_list=None,
     config_dict=None,
     saved=True,
@@ -52,6 +53,7 @@ def run(
         res = run_recbole(
             model=model,
             dataset=dataset,
+            exp_name=exp_name, 
             config_file_list=config_file_list,
             config_dict=config_dict,
             saved=saved,
@@ -82,7 +84,7 @@ def run(
 
         mp.spawn(
             run_recboles,
-            args=(model, dataset, config_file_list, kwargs),
+            args=(model, dataset, exp_name, config_file_list, kwargs),
             nprocs=nproc,
             join=True,
         )
@@ -95,6 +97,7 @@ def run(
 def run_recbole(
     model=None,
     dataset=None,
+    exp_name=None, 
     config_file_list=None,
     config_dict=None,
     saved=True,
@@ -115,6 +118,7 @@ def run_recbole(
     config = Config(
         model=model,
         dataset=dataset,
+        exp_name=exp_name, 
         config_file_list=config_file_list,
         config_dict=config_dict,
     )
@@ -188,7 +192,7 @@ def run_recboles(rank, *args):
     kwargs["config_dict"] = kwargs.get("config_dict", {})
     kwargs["config_dict"]["local_rank"] = rank
     run_recbole(
-        *args[:3],
+        *args[:4],
         **kwargs,
     )
 

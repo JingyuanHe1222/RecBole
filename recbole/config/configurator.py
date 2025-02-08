@@ -66,7 +66,7 @@ class Config(object):
     """
 
     def __init__(
-        self, model=None, dataset=None, config_file_list=None, config_dict=None
+        self, model=None, dataset=None, exp_name=None, config_file_list=None, config_dict=None
     ):
         """
         Args:
@@ -86,8 +86,10 @@ class Config(object):
         self._merge_external_config_dict()
 
         self.model, self.model_class, self.dataset = self._get_model_and_dataset(
-            model, dataset
+            model, dataset, 
         )
+        self.exp_name = self._get_exp_name(exp_name)
+
         self._load_internal_config_dict(self.model, self.model_class, self.dataset)
         self.final_config_dict = self._get_final_config_dict()
         self._set_default_parameters()
@@ -198,6 +200,14 @@ class Config(object):
         external_config_dict.update(self.variable_config_dict)
         external_config_dict.update(self.cmd_config_dict)
         self.external_config_dict = external_config_dict
+
+    def _get_exp_name(self, exp_name): 
+        if exp_name is None: 
+            try:
+                exp_name = self.external_config_dict["exp_name"]
+            except KeyError:
+                exp_name = self.model + "_" + self.dataset 
+        return exp_name
 
     def _get_model_and_dataset(self, model, dataset):
         if model is None:
@@ -327,15 +337,12 @@ class Config(object):
     def _set_default_parameters(self):
         self.final_config_dict["dataset"] = self.dataset
         self.final_config_dict["model"] = self.model
-        if self.dataset == "ml-100k":
-            current_path = os.path.dirname(os.path.realpath(__file__))
-            self.final_config_dict["data_path"] = os.path.join(
-                current_path, "../dataset_example/" + self.dataset
-            )
-        else:
-            self.final_config_dict["data_path"] = os.path.join(
-                self.final_config_dict["data_path"], self.dataset
-            )
+        self.final_config_dict["exp_name"] = self.exp_name
+        self.final_config_dict["data_path"] = os.path.join(
+            self.final_config_dict["data_path"], self.dataset
+        )
+        if self.exp_name is not None: 
+            self.final_config_dict['checkpoint_dir'] = os.path.join(self.final_config_dict['checkpoint_dir'], self.exp_name)
 
         if hasattr(self.model_class, "input_type"):
             self.final_config_dict["MODEL_INPUT_TYPE"] = self.model_class.input_type
@@ -472,6 +479,9 @@ class Config(object):
             raise NotImplementedError(
                 "Full sort evaluation do not match value-based metrics!"
             )
+        if not self.final_config_dict['gpu_id'] or len(self.final_config_dict['gpu_id']) < self.final_config_dict["nproc"]: 
+            gpus = list(map(str, range(self.final_config_dict["nproc"])))
+            self.final_config_dict['gpu_id'] = ",".join(gpus)
 
     def _init_device(self):
         if isinstance(self.final_config_dict["gpu_id"], tuple):
@@ -493,6 +503,7 @@ class Config(object):
                 else torch.device("cuda")
             )
         else:
+            print(gpu_id)
             assert len(gpu_id.split(",")) >= self.final_config_dict["nproc"]
             torch.distributed.init_process_group(
                 backend="nccl",
