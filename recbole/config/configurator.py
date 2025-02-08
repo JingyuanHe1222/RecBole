@@ -503,7 +503,6 @@ class Config(object):
                 else torch.device("cuda")
             )
         else:
-            print(gpu_id)
             assert len(gpu_id.split(",")) >= self.final_config_dict["nproc"]
             torch.distributed.init_process_group(
                 backend="nccl",
