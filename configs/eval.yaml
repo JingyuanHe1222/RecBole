@@ -11,6 +11,6 @@ metrics: ["Recall","NDCG", "Hit"]
 topk: [1,5,10,20,50,100]
 valid_metric: NDCG@10
 valid_metric_bigger: True
-eval_batch_size: 256
+eval_batch_size: 1024
 loss_decimal_place: 4
 metric_decimal_place: 4

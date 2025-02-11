@@ -92,6 +92,7 @@ class Config(object):
 
         self._load_internal_config_dict(self.model, self.model_class, self.dataset)
         self.final_config_dict = self._get_final_config_dict()
+        
         self._set_default_parameters()
         self._init_device()
         self._set_train_neg_sample_args()
@@ -479,9 +480,10 @@ class Config(object):
             raise NotImplementedError(
                 "Full sort evaluation do not match value-based metrics!"
             )
-        if not self.final_config_dict['gpu_id'] or len(self.final_config_dict['gpu_id']) < self.final_config_dict["nproc"]: 
-            gpus = list(map(str, range(self.final_config_dict["nproc"])))
-            self.final_config_dict['gpu_id'] = ",".join(gpus)
+        if "nproc" in self.final_config_dict: 
+            if not self.final_config_dict['gpu_id'] or len(self.final_config_dict['gpu_id']) < self.final_config_dict["nproc"]: 
+                gpus = list(map(str, range(self.final_config_dict["nproc"])))
+                self.final_config_dict['gpu_id'] = ",".join(gpus)
 
     def _init_device(self):
         if isinstance(self.final_config_dict["gpu_id"], tuple):
